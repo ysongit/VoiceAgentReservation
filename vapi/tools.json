@@ -1,0 +1,93 @@
+{
+  "_comment": "Paste each tool object into the Vapi dashboard, or send via Vapi API. Tool names MUST match the dispatcher in src/routes/tools.ts exactly.",
+  "server": {
+    "url": "https://YOUR_PUBLIC_URL/vapi/tools",
+    "secret": "set this to VAPI_WEBHOOK_SECRET if you enabled it; sent as x-vapi-secret header"
+  },
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "check_availability",
+        "description": "Check if a specific date and time is available for a reservation. Call this before attempting to book.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": "string",
+              "description": "Reservation date in YYYY-MM-DD format (restaurant local timezone)."
+            },
+            "time": {
+              "type": "string",
+              "description": "Reservation time in 24-hour HH:MM format (restaurant local timezone)."
+            },
+            "party_size": {
+              "type": "integer",
+              "description": "Number of guests.",
+              "minimum": 1
+            }
+          },
+          "required": ["date", "time", "party_size"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "create_reservation",
+        "description": "Book a reservation. Only call after check_availability confirms the slot is free.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "customer_name": { "type": "string", "description": "Full name of the guest." },
+            "party_size": { "type": "integer", "minimum": 1 },
+            "date": { "type": "string", "description": "YYYY-MM-DD." },
+            "time": { "type": "string", "description": "HH:MM 24h." },
+            "phone": { "type": "string", "description": "Optional phone number for the reservation." },
+            "notes": { "type": "string", "description": "Optional notes (allergies, special occasion, etc.)." }
+          },
+          "required": ["customer_name", "party_size", "date", "time"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "lookup_reservation",
+        "description": "Find an existing reservation by confirmation code or phone number. Provide at least one.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "confirmation_code": { "type": "string", "description": "6-character confirmation code." },
+            "phone": { "type": "string", "description": "Phone number on the reservation." }
+          }
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "cancel_reservation",
+        "description": "Cancel an existing reservation by confirmation code.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "confirmation_code": { "type": "string", "description": "6-character confirmation code." }
+          },
+          "required": ["confirmation_code"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_restaurant_info",
+        "description": "Return basic restaurant info: name, hours, max party size, location.",
+        "parameters": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    }
+  ]
+}
