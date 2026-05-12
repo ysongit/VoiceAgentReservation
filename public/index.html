@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>__RESTAURANT_NAME__ — Reservations</title>
+  <style>
+    :root { color-scheme: light; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 36rem;
+      margin: 4rem auto;
+      padding: 0 1.5rem;
+      color: #1a1a1a;
+      background: #faf8f5;
+    }
+    h1 { font-size: 1.8rem; margin-bottom: .25rem; }
+    .sub { color: #666; margin-top: 0; }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      margin-top: 2rem;
+      text-align: center;
+    }
+    button {
+      font-size: 1rem;
+      padding: .85rem 1.6rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: #1a1a1a;
+      color: white;
+      transition: background .15s;
+    }
+    button:hover:not(:disabled) { background: #333; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    button.end { background: #c33; }
+    button.end:hover:not(:disabled) { background: #a22; }
+    .status {
+      margin-top: 1rem;
+      font-size: .9rem;
+      color: #666;
+      min-height: 1.2em;
+    }
+    .status.live { color: #2a8a2a; font-weight: 500; }
+    .error {
+      background: #fee;
+      color: #900;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+      font-size: .9rem;
+    }
+    .transcript {
+      text-align: left;
+      margin-top: 1.5rem;
+      max-height: 240px;
+      overflow-y: auto;
+      font-size: .9rem;
+      border-top: 1px solid #eee;
+      padding-top: 1rem;
+    }
+    .transcript p { margin: .4rem 0; }
+    .transcript .user { color: #1a1a1a; }
+    .transcript .agent { color: #2a6acc; }
+    .transcript .role { font-weight: 600; margin-right: .4rem; }
+  </style>
+</head>
+<body>
+  <h1>__RESTAURANT_NAME__</h1>
+  <p class="sub">Voice reservations</p>
+
+  <div class="card">
+    <button id="callBtn">Start call</button>
+    <div id="status" class="status">Click "Start call" and grant microphone access.</div>
+    <div id="error" class="error" style="display:none"></div>
+    <div id="transcript" class="transcript"></div>
+  </div>
+
+  <script type="module">
+    // Vapi web SDK via CDN — no bundler needed.
+    import Vapi from 'https://esm.sh/@vapi-ai/web@2.2.5';
+
+    const PUBLIC_KEY = '__VAPI_PUBLIC_KEY__';
+    const ASSISTANT_ID = '__VAPI_ASSISTANT_ID__';
+
+    const btn = document.getElementById('callBtn');
+    const statusEl = document.getElementById('status');
+    const errorEl = document.getElementById('error');
+    const transcriptEl = document.getElementById('transcript');
+
+    if (!PUBLIC_KEY || !ASSISTANT_ID) {
+      errorEl.style.display = 'block';
+      errorEl.textContent = 'Vapi is not configured. Set VAPI_PUBLIC_KEY and VAPI_ASSISTANT_ID in .env, then restart.';
+      btn.disabled = true;
+    }
+
+    const vapi = new Vapi(PUBLIC_KEY);
+    let inCall = false;
+
+    function setCallState(active) {
+      inCall = active;
+      btn.textContent = active ? 'End call' : 'Start call';
+      btn.classList.toggle('end', active);
+      statusEl.textContent = active ? 'Connected. Speak naturally.' : 'Call ended.';
+      statusEl.classList.toggle('live', active);
+    }
+
+    btn.addEventListener('click', async () => {
+      try {
+        errorEl.style.display = 'none';
+        if (inCall) {
+          vapi.stop();
+        } else {
+          transcriptEl.innerHTML = '';
+          statusEl.textContent = 'Connecting…';
+          await vapi.start(ASSISTANT_ID);
+        }
+      } catch (err) {
+        errorEl.style.display = 'block';
+        errorEl.textContent = err?.message || String(err);
+      }
+    });
+
+    vapi.on('call-start', () => setCallState(true));
+    vapi.on('call-end', () => setCallState(false));
+    vapi.on('error', (e) => {
+      errorEl.style.display = 'block';
+      errorEl.textContent = e?.errorMsg || e?.message || JSON.stringify(e);
+    });
+    vapi.on('message', (msg) => {
+      if (msg.type === 'transcript' && msg.transcriptType === 'final') {
+        const p = document.createElement('p');
+        const role = msg.role === 'user' ? 'You' : 'Agent';
+        p.className = msg.role === 'user' ? 'user' : 'agent';
+        p.innerHTML = `<span class="role">${role}:</span>${escapeHtml(msg.transcript)}`;
+        transcriptEl.appendChild(p);
+        transcriptEl.scrollTop = transcriptEl.scrollHeight;
+      }
+    });
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+      }[c]));
+    }
+  </script>
+</body>
+</html>

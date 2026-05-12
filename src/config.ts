@@ -22,6 +22,8 @@ const envSchema = z.object({
   RESERVATION_DURATION_MINUTES: z.coerce.number().int().positive(),
 
   VAPI_WEBHOOK_SECRET: z.string().optional().transform((v) => (v && v.length > 0 ? v : undefined)),
+  VAPI_PUBLIC_KEY: z.string().optional().transform((v) => (v && v.length > 0 ? v : undefined)),
+  VAPI_ASSISTANT_ID: z.string().optional().transform((v) => (v && v.length > 0 ? v : undefined)),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -62,6 +64,8 @@ export const config = {
 
   vapi: {
     webhookSecret: env.VAPI_WEBHOOK_SECRET,
+    publicKey: env.VAPI_PUBLIC_KEY,
+    assistantId: env.VAPI_ASSISTANT_ID,
   },
 } as const;
 
