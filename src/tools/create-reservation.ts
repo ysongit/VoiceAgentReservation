@@ -11,6 +11,7 @@ export const createReservationSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   time: z.string().regex(/^\d{2}:\d{2}$/),
   phone: z.string().optional(),
+  email: z.string().email().optional(),
   notes: z.string().optional(),
 });
 
@@ -46,6 +47,7 @@ export async function createReservation(
     startUtc: start,
     endUtc: end,
     timezone: ctx.tz,
+    attendeeEmail: args.email,
   });
 
   const { error: updateErr } = await ctx.supabase
@@ -91,6 +93,7 @@ function buildDescription(args: CreateReservationArgs, code: string): string {
     `Party size: ${args.party_size}`,
   ];
   if (args.phone) parts.push(`Phone: ${args.phone}`);
+  if (args.email) parts.push(`Email: ${args.email}`);
   if (args.notes) parts.push(`Notes: ${args.notes}`);
   return parts.join('\n');
 }

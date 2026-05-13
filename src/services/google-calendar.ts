@@ -33,6 +33,7 @@ export interface CreateEventInput {
   startUtc: Date;
   endUtc: Date;
   timezone: string;
+  attendeeEmail?: string;
 }
 
 /** Create an event with timezone-qualified start/end. Returns the created event id. */
@@ -43,11 +44,13 @@ export async function createEvent(
 ): Promise<string> {
   const res = await calendar.events.insert({
     calendarId,
+    sendUpdates: input.attendeeEmail ? 'all' : 'none',
     requestBody: {
       summary: input.summary,
       description: input.description,
       start: { dateTime: toZonedIso(input.startUtc, input.timezone), timeZone: input.timezone },
       end: { dateTime: toZonedIso(input.endUtc, input.timezone), timeZone: input.timezone },
+      attendees: input.attendeeEmail ? [{ email: input.attendeeEmail }] : undefined,
     },
   });
   const id = res.data.id;

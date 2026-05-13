@@ -44,6 +44,7 @@
             "date": { "type": "string", "description": "YYYY-MM-DD." },
             "time": { "type": "string", "description": "HH:MM 24h." },
             "phone": { "type": "string", "description": "Optional phone number for the reservation." },
+            "email": { "type": "string", "description": "Optional email address. If provided, the guest will receive a Google Calendar invite so the reservation appears on their personal calendar." },
             "notes": { "type": "string", "description": "Optional notes (allergies, special occasion, etc.)." }
           },
           "required": ["customer_name", "party_size", "date", "time"]
